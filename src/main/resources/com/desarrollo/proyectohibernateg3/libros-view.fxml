@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
@@ -42,6 +43,9 @@
                 <Label text="Precio:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
                 <TextField fx:id="txtPrecio" promptText="Precio del libro"
                            GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                <Label text="Categoría:" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+                <ComboBox fx:id="cmbCategoria" promptText="Selecciona una categoría" maxWidth="Infinity"
+                          GridPane.columnIndex="1" GridPane.rowIndex="4"/>
             </children>
         </GridPane>
         <HBox spacing="10.0">
@@ -63,6 +67,7 @@
                 <TableColumn fx:id="colAutor" prefWidth="210.0" text="Autor"/>
                 <TableColumn fx:id="colAnio" prefWidth="110.0" text="Año"/>
                 <TableColumn fx:id="colPrecio" prefWidth="130.0" text="Precio"/>
+                <TableColumn fx:id="colCategoria" prefWidth="130.0" text="Categoría"/>
             </columns>
         </TableView>
     </children>

@@ -2,9 +2,12 @@ package com.desarrollo.proyectohibernateg3.controller;
 
 import javafx.scene.control.*;
 import com.desarrollo.proyectohibernateg3.dao.LibroDAO;
+import com.desarrollo.proyectohibernateg3.dao.CategoriaDAO;
 import com.desarrollo.proyectohibernateg3.model.Libro;
+import com.desarrollo.proyectohibernateg3.model.Categoria;
 import javafx.fxml.FXML;
 import javafx.collections.FXCollections;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.math.BigDecimal;
@@ -13,6 +16,7 @@ import java.util.List;
 
 public class LibroController {
     private final LibroDAO libroDAO = new LibroDAO();
+    private final CategoriaDAO categoriaDAO = new CategoriaDAO();
     private Long idSeleccionado;
 
     @FXML
@@ -23,6 +27,9 @@ public class LibroController {
     private TextField txtAnio;
     @FXML
     private TextField txtPrecio;
+
+    @FXML
+    private ComboBox<Categoria> cmbCategoria;
 
     @FXML
     private Button btnGuardar;
@@ -49,12 +56,23 @@ public class LibroController {
     private TableColumn<Libro, BigDecimal> colPrecio;
 
     @FXML
+    private TableColumn<Libro, String> colCategoria;
+
+    @FXML
     public void initialize() {
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colTitulo.setCellValueFactory(new PropertyValueFactory<>("titulo"));
         colAutor.setCellValueFactory(new PropertyValueFactory<>("autor"));
         colAnio.setCellValueFactory(new PropertyValueFactory<>("anioPublicacion"));
         colPrecio.setCellValueFactory(new PropertyValueFactory<>("precio"));
+
+        colCategoria.setCellValueFactory(data -> {
+            Categoria categoria = data.getValue().getCategoria();
+            String nombre = categoria != null
+                    ? categoria.getNombre()
+                    : "Sin categoría";
+            return new SimpleStringProperty(nombre);
+        });
 
         tablaLibros.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> {
@@ -68,6 +86,7 @@ public class LibroController {
         );
 
         actualizarBotones();
+        cargarCategorias();
         cargarLibros();
     }
 
@@ -77,6 +96,13 @@ public class LibroController {
         txtAutor.setText(libro.getAutor());
         txtAnio.setText(String.valueOf(libro.getAnioPublicacion()));
         txtPrecio.setText(libro.getPrecio().toPlainString());
+        cmbCategoria.setValue(null);
+        for (Categoria categoria : cmbCategoria.getItems()) {
+            if (categoria.getId().equals(libro.getCategoria().getId())) {
+                cmbCategoria.setValue(categoria);
+                break;
+            }
+        }
         actualizarBotones();
     }
 
@@ -102,7 +128,13 @@ public class LibroController {
             throw new IllegalArgumentException("El año debe estar entre 1450 y 2100 y el precio no puede ser negativo.");
         }
 
-        return new Libro(idSeleccionado, titulo, autor, anio, precio);
+        Categoria categoria = cmbCategoria.getValue();
+        if (categoria == null) {
+            throw new IllegalArgumentException("Selecciona una categoría.");
+        }
+        Libro libro = new Libro(titulo, autor, anio, precio, categoria);
+        libro.setId(idSeleccionado);
+        return libro;
     }
 
     @FXML
@@ -183,6 +215,8 @@ public class LibroController {
         txtAutor.clear();
         txtAnio.clear();
         txtPrecio.clear();
+        cmbCategoria.getSelectionModel().clearSelection();
+        cmbCategoria.setValue(null);
         actualizarBotones();
     }
 
@@ -195,6 +229,25 @@ public class LibroController {
             ex.printStackTrace();
             mostrarError(ex);
         }
+    }
+
+    private void cargarCategorias() {
+        try {
+            List<Categoria> categorias = categoriaDAO.listar();
+            cmbCategoria.setItems(
+                    FXCollections.observableArrayList(categorias)
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta(Alert.AlertType.ERROR, "No se pudieron cargar las categorías.");
+        }
+    }
+
+    private void mostrarAlerta(Alert.AlertType tipo, String mensaje) {
+        Alert alerta = new Alert(tipo);
+        alerta.setHeaderText(null);
+        alerta.setContentText(mensaje);
+        alerta.showAndWait();
     }
 
     private void mostrarError(Exception ex) {

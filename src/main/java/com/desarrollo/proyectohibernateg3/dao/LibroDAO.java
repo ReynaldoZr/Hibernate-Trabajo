@@ -1,13 +1,27 @@
 package com.desarrollo.proyectohibernateg3.dao;
 
 import com.desarrollo.proyectohibernateg3.database.JPAUtil;
+import com.desarrollo.proyectohibernateg3.model.Categoria;
 import com.desarrollo.proyectohibernateg3.model.Libro;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 
 import java.util.List;
 
-public class LibroDAO {
+public class  LibroDAO {
+
+    private Categoria obtenerCategoria(EntityManager em, Libro libro) {
+        if (libro.getCategoria() == null || libro.getCategoria().getId() == null) {
+            throw new RuntimeException("Error al obtener categoría");
+        }
+
+        Long categoriaId = libro.getCategoria().getId();
+        Categoria categoria = em.find(Categoria.class, categoriaId);
+        if (categoria == null) {
+            throw new RuntimeException("Error al obtener categoría");
+        }
+        return categoria;
+    }
 
     public void guardar(Libro libro) {
         EntityManager em = JPAUtil.getEntityManager();
@@ -15,6 +29,9 @@ public class LibroDAO {
 
         try {
             tx.begin();
+
+            Categoria categoria = obtenerCategoria(em, libro);
+            libro.setCategoria(categoria);
 
             em.persist(libro);
 
@@ -37,7 +54,7 @@ public class LibroDAO {
 
         try {
             return em.createQuery(
-                    "SELECT l FROM Libro l ORDER BY l.id",
+                    "SELECT l FROM Libro l JOIN FETCH l.categoria ORDER BY l.id",
                     Libro.class
             ).getResultList();
 
@@ -58,6 +75,9 @@ public class LibroDAO {
                 tx.rollback();
                 return false;
             }
+            Categoria categoria = obtenerCategoria(em, libro);
+            libroBD.setCategoria(categoria);
+
             libroBD.setTitulo(libro.getTitulo());
             libroBD.setAutor(libro.getAutor());
             libroBD.setAnioPublicacion(
